@@ -45,6 +45,11 @@
 <script>
   export default {
     name: 'Overview',
+    sockets: {
+      connect: function () {
+        console.log('socket to notification channel connected')
+      },
+    },
 
     data() {
       return {
@@ -91,7 +96,10 @@
     },
 
     mounted() {
-
+      console.log("mounting socket events");
+      this.sockets.subscribe('screenshot-taken', function(data) {
+        console.log("Event received: ", data);
+      })
     }
   }
 

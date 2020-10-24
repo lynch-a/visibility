@@ -5,6 +5,8 @@ const { Cluster } = require('puppeteer-cluster');
 const fs = require('fs');
 var sqlite3 = require('sqlite3').verbose()
 const { Sequelize, Model, DataTypes } = require('sequelize');
+const url = require('url');
+const utils = require('./utils');
 
 const sequelize = new Sequelize('sqlite::memory:');
 const app = express();
@@ -39,14 +41,14 @@ async function init_cluster() {
   await cluster.task(async ({ page, data: url }) => {
     await page.setRequestInterception(true);
       page.on('request', request => {
-        if (true) {
+        if (false) {
           if (request.resourceType() === 'script') {
             request.abort();
             return;
           }
       }
 
-      if (true) {
+      if (false) {
         if (request.resourceType() === 'image') {
           request.abort();
           return;
@@ -55,9 +57,9 @@ async function init_cluster() {
 
       request.continue();
     });
-
+    console.log("going to url: " + url);
     await page.goto(url, { waitUntil: 'domcontentloaded' });
-
+    console.log("done visiting url");
     //var file_name = url.replace("://", "-").replace(".", "-").replace(":", "-");
 
     var b64 = await page.screenshot(
@@ -68,8 +70,13 @@ async function init_cluster() {
     );
 
     console.log(`Screenshot taken: ${url}`);
-    console.log(b64);
-    // TODO fire event to WS
+    //console.log(b64);
+    // fire event to WS
+    console.log("url: " + url);
+    var port = utils.getPortForUrl(url);
+
+    Socketio.sockets.emit('screenshot-taken', {"url": url, "port": port, "img": img});
+    console.log("got here");
     // update DB with snapshot
   });
 }
@@ -107,15 +114,14 @@ async function init_express() {
         return res.end('No hosts in POST body detected - 1');
       }
 
-      console.log(req.body.hosts.length);
-
       if (req.body.hosts.length < 1) {
         return res.end('No hosts in POST body detected - 2');
       }
 
       try {
-        const screen = await cluster.queue(req.query.url);
-
+        for (let host of req.body.hosts) {
+          const screen = await cluster.queue(`${host.protocol}://${host.host}:${host.port}`);
+        }
         // respond with image
         res.status(200).json({"success": true});
         res.end('{ "success": true }');
