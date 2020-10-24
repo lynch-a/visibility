@@ -4,6 +4,7 @@
   "description": "",
   "main": "app.js",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.17.1",
     "nodemon": "^2.0.6",
     "puppeteer": "^5.4.0",
@@ -15,7 +16,8 @@
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "./node_modules/.bin/nodemon app.js"
+    "start": "./node_modules/.bin/nodemon app.js",
+    "setup-db": "node setup-db.js"
   },
   "keywords": [],
   "author": "",

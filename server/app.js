@@ -4,14 +4,17 @@ const Socketio = require("socket.io")(Http);
 const { Cluster } = require('puppeteer-cluster');
 const fs = require('fs');
 var sqlite3 = require('sqlite3').verbose()
-const { Sequelize, Model, DataTypes } = require('sequelize');
 const url = require('url');
 const utils = require('./utils');
+const sequelize = require('./db');
+const { models } = sequelize;
+const cors = require('cors');
 
-const sequelize = new Sequelize('sqlite::memory:');
 const app = express();
+app.use(cors());
 let cluster = null;
 app.use(express.json());
+
 
 
 async function init_cluster() {
@@ -73,24 +76,19 @@ async function init_cluster() {
     //console.log(b64);
     // fire event to WS
     console.log("url: " + url);
-    var port = utils.getPortForUrl(url);
+    var {host, protocol, port} = utils.getParsedUrl(url);
 
-    Socketio.sockets.emit('screenshot-taken', {"url": url, "port": port, "img": img});
-    console.log("got here");
-    // update DB with snapshot
+    const data = {
+      host,
+      protocol,
+      port,
+      "img": `data:image/png;base64,${b64}`
+    };
+
+    await models.host.create(data);
+
+    Socketio.sockets.emit('screenshot-taken', data);
   });
-}
-
-async function init_db() {
-  console.log(`Checking database connection...`);
-  try {
-    await sequelize.authenticate();
-    console.log('Database connection OK!');
-  } catch (error) {
-    console.log('Unable to connect to the database:');
-    console.log(error.message);
-    process.exit(1);
-  }
 }
 
 async function init_ws() {
@@ -130,9 +128,26 @@ async function init_express() {
         res.end('Error: ' + err.message);
       }
   });
+
+  app.get('/hosts', async function (req, res) {
+    const hosts = await models.host.findAll();
+    res.status(200).json(hosts);
+  });
 }
 
-init_db();
+async function init_db() {
+  console.log(`Checking database connection...`);
+  try {
+    await sequelize.authenticate();
+    console.log('Database connection OK!');
+  } catch (error) {
+    console.log('Unable to connect to the database:');
+    console.log(error.message);
+    process.exit(1);
+  }
+}
+
 init_cluster();
 init_ws();
 init_express();
+init_db();

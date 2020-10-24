@@ -3,10 +3,10 @@ const { DataTypes } = require('sequelize');
 module.exports = (sequelize) => {
   sequelize.define('host', {
 
+    host: DataTypes.STRING,
     protocol: DataTypes.STRING,
-    domain: DataTypes.DATE,
     port: DataTypes.INTEGER,
-    img: DataTypes.STRING
+    img: DataTypes.TEXT
   });
 };
 

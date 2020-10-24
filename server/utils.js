@@ -1,4 +1,4 @@
-module.exports.getPortForUrl = function(url) {
+module.exports.getParsedUrl = function(url) {
   var parsed_url = new URL(url);
   var parsed_port = parsed_url.port;
 
@@ -12,6 +12,10 @@ module.exports.getPortForUrl = function(url) {
         break;
     }
   }
-  
-  return parsed_port;
+
+  return {
+    "host": parsed_url.hostname,
+    "protocol": parsed_url.protocol,
+    "port": parsed_port
+  };
 }

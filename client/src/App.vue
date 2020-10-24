@@ -28,7 +28,7 @@
     </div>
 
     <v-main>
-      <Overview/>
+      <Overview :hosts="HOSTS"/>
     </v-main>
   </v-app>
 </template>
@@ -36,6 +36,7 @@
 <script>
 //import HelloWorld from './components/HelloWorld';
 import Overview from './components/Overview';
+import {mapGetters} from 'vuex';
 
 export default {
   name: 'App',
@@ -45,8 +46,31 @@ export default {
     Overview
   },
 
-  data: () => ({
-    //
-  }),
+  computed: {
+    ...mapGetters(["HOSTS"])
+  },
+
+  mounted() {
+    this.$store.dispatch("SET_HOST");
+  },
+
+  sockets: {
+    "screenshot-taken": function(data) {
+      console.log("ss-taken: ", data);
+      this.$store.dispatch("ADD_HOST", data);
+    },
+
+    connect: function () {
+      console.log('socket to notification channel connected from app.vue')
+    },
+  },
+
+  mutations: {
+
+  },
+
+  actions: {
+
+  }
 };
 </script>

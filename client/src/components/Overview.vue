@@ -11,10 +11,10 @@
             width=100%
           ></v-img>
 
-          <v-card-title v-text="host.url"></v-card-title>
+          <v-card-title v-text="host.host"></v-card-title>
 
           <v-card-text>
-            {{ host.url }}
+            {{ host.host }}
           </v-card-text>
 
           <v-chip-group v-for="tag in host.tags" v-bind:key="tag.id">
@@ -43,14 +43,14 @@
 </template>
 
 <script>
+
   export default {
     name: 'Overview',
-    sockets: {
-      connect: function () {
-        console.log('socket to notification channel connected')
-      },
-    },
-
+    
+    props: [
+      'hosts'
+    ]
+    /*
     data() {
       return {
         hosts: [
@@ -93,14 +93,8 @@
           },
         ]
       }
-    },
-
-    mounted() {
-      console.log("mounting socket events");
-      this.sockets.subscribe('screenshot-taken', function(data) {
-        console.log("Event received: ", data);
-      })
     }
+    */
   }
 
 </script>
