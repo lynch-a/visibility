@@ -5,8 +5,8 @@ const path = require('path');
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: `${path.dirname(__filename)}/db.sqlite`,
-  logQueryParameters: true,
-  benchmark: true
+  //logQueryParameters: true,
+  //benchmark: true
 });
 
 const modelDefiners = [

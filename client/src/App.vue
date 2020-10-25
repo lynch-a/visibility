@@ -28,7 +28,8 @@
     </div>
 
     <v-main>
-      <Overview :hosts="HOSTS"/>
+      <Scan/>
+      <Overview/>
     </v-main>
   </v-app>
 </template>
@@ -36,22 +37,15 @@
 <script>
 //import HelloWorld from './components/HelloWorld';
 import Overview from './components/Overview';
-import {mapGetters} from 'vuex';
+import Scan from './components/Scan';
 
 export default {
   name: 'App',
 
   components: {
     //HelloWorld,
-    Overview
-  },
-
-  computed: {
-    ...mapGetters(["HOSTS"])
-  },
-
-  mounted() {
-    this.$store.dispatch("SET_HOST");
+    Overview,
+    Scan
   },
 
   sockets: {

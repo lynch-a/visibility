@@ -13,14 +13,14 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 let cluster = null;
-app.use(express.json());
+app.use(express.json({limit: '10mb'}));
 
 
 
 async function init_cluster() {
   cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_PAGE,
-    maxConcurrency: 10,
+    maxConcurrency: 20,
     puppeteerOptions: {
       headless: true,
       ignoreHTTPSErrors: true,
@@ -60,9 +60,7 @@ async function init_cluster() {
 
       request.continue();
     });
-    console.log("going to url: " + url);
     await page.goto(url, { waitUntil: 'domcontentloaded' });
-    console.log("done visiting url");
     //var file_name = url.replace("://", "-").replace(".", "-").replace(":", "-");
 
     var b64 = await page.screenshot(
@@ -75,7 +73,6 @@ async function init_cluster() {
     console.log(`Screenshot taken: ${url}`);
     //console.log(b64);
     // fire event to WS
-    console.log("url: " + url);
     var {host, protocol, port} = utils.getParsedUrl(url);
 
     const data = {
