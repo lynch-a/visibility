@@ -11,10 +11,12 @@
             width=100%
           ></v-img>
 
-          <v-card-title v-text="host.host"></v-card-title>
+          <v-card-title>
+            {{ host | formatHost }}
+          </v-card-title>
 
           <v-card-text>
-            {{ host.host }}
+            {{ host | formatHost }}
           </v-card-text>
 
           <v-chip-group v-for="tag in host.tags" v-bind:key="tag.id">
@@ -55,6 +57,12 @@
     mounted() {
       this.$store.dispatch("SET_HOST");
     },
+
+    filters: {
+      formatHost: function(host) {
+        return `${host.protocol}://${host.host}:${host.port}`;
+      }
+    }
   }
 
 </script>

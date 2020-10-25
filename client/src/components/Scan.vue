@@ -88,66 +88,66 @@
     name: 'Scan',
 
     data () {
-    const defaultForm = Object.freeze({
-      host_list: '',
-      http_ports: '',
-      https_ports: ''
-    })
+      const defaultForm = Object.freeze({
+        host_list: '',
+        http_ports: '',
+        https_ports: ''
+      })
 
-    return {
-      form: Object.assign({}, defaultForm),
-      rules: {
+      return {
+        form: Object.assign({}, defaultForm),
+        rules: {
 
-      },
+        },
 
-      conditions: false,
-      snackbar: false,
-      terms: false,
-      defaultForm,
-    }
-  },
-
-  computed: {
-    formIsValid () {
-      return (
-        this.form.http_ports &&
-        this.form.https_ports &&
-        this.form.host_list
-      )
-    },
-  },
-
-// curl -X POST -d '{ "hosts": [ { "host": "facebook.com", "protocol": "https", "port": 443 } ] }' -H 'content-type: application/json' localhost:3000/scan^C
-
-  methods: {
-    resetForm () {
-      this.form = Object.assign({}, this.defaultForm)
-      this.$refs.form.reset()
-    },
-    async submit () {
-      const data = this.formatData(this.form);
-      console.log("data to send: " + data);
-
-      const res = await Axios.post('http://localhost:3000/scan', {"hosts": data});
-      console.log(res);
-      this.snackbar = true
-      this.resetForm()
-    },
-    formatData(data) {
-      const hosts = [];
-
-      for(let host of data.host_list.split("\n")) {
-        for (let port of data.http_ports.split(",")) {
-          hosts.push({host, port, protocol: "http"});
-        }
-        for (let port of data.https_ports.split(",")) {
-          hosts.push({host, port, protocol: "https"});
-        }
+        conditions: false,
+        snackbar: false,
+        terms: false,
+        defaultForm,
       }
+    },
 
-      return hosts;
-    }
-  },
+    computed: {
+      formIsValid () {
+        return (
+          this.form.http_ports &&
+          this.form.https_ports &&
+          this.form.host_list
+        )
+      },
+    },
+
+  // curl -X POST -d '{ "hosts": [ { "host": "facebook.com", "protocol": "https", "port": 443 } ] }' -H 'content-type: application/json' localhost:3000/scan^C
+
+    methods: {
+      resetForm () {
+        this.form = Object.assign({}, this.defaultForm)
+        this.$refs.form.reset()
+      },
+      async submit () {
+        const data = this.formatData(this.form);
+        console.log("data to send: " + data);
+
+        const res = await Axios.post('http://localhost:3000/scan', {"hosts": data});
+        console.log(res);
+        this.snackbar = true
+        this.resetForm()
+      },
+      formatData(data) {
+        const hosts = [];
+
+        for(let host of data.host_list.split("\n")) {
+          for (let port of data.http_ports.split(",")) {
+            hosts.push({host, port, protocol: "http"});
+          }
+          for (let port of data.https_ports.split(",")) {
+            hosts.push({host, port, protocol: "https"});
+          }
+        }
+
+        return hosts;
+      }
+    },
   }
 
 </script>

@@ -15,7 +15,7 @@ module.exports.getParsedUrl = function(url) {
 
   return {
     "host": parsed_url.hostname,
-    "protocol": parsed_url.protocol,
+    "protocol": parsed_url.protocol.replace(":", ""),
     "port": parsed_port
   };
 }
