@@ -41,17 +41,17 @@ async function init_cluster() {
     timeout: 10000
   });
 
-  await cluster.task(async ({ page, data: url }) => {
+  await cluster.task(async ({ page, data: data }) => {
     await page.setRequestInterception(true);
       page.on('request', request => {
-        if (false) {
+        if (data["scripts"]) {
           if (request.resourceType() === 'script') {
             request.abort();
             return;
           }
       }
 
-      if (false) {
+      if (data["images"]) {
         if (request.resourceType() === 'image') {
           request.abort();
           return;
@@ -60,7 +60,8 @@ async function init_cluster() {
 
       request.continue();
     });
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
+
+    await page.goto(data["url"], { waitUntil: 'domcontentloaded' });
     //var file_name = url.replace("://", "-").replace(".", "-").replace(":", "-");
 
     var b64 = await page.screenshot(
@@ -70,21 +71,21 @@ async function init_cluster() {
       }
     );
 
-    console.log(`Screenshot taken: ${url}`);
-    //console.log(b64);
-    // fire event to WS
-    var {host, protocol, port} = utils.getParsedUrl(url);
+    console.log(`Screenshot taken: ${data["url"]}`);
 
-    const data = {
+    // fire event to WS
+    var {host, protocol, port} = utils.getParsedUrl(data["url"]);
+
+    const screenshot_data = {
       host,
       protocol,
       port,
       "img": `data:image/png;base64,${b64}`
     };
 
-    await models.host.create(data);
+    await models.host.create(screenshot_data);
 
-    Socketio.sockets.emit('screenshot-taken', data);
+    Socketio.sockets.emit('screenshot-taken', screenshot_data);
   });
 }
 
@@ -104,24 +105,55 @@ async function init_express() {
       console.log('Screenshot server listening on port 3000.');
   });
 
-  app.post('/scan', async function (req, res) {
-      if (!req.body.hosts) {
-        return res.end('No hosts in POST body detected - 1');
+  app.post('/scan/screenshots', async function (req, res) {
+      if (!req.body.targets) {
+        return res.end('No targets in POST body detected - 1');
       }
 
-      if (req.body.hosts.length < 1) {
-        return res.end('No hosts in POST body detected - 2');
+      if (req.body.targets.length < 1) {
+        return res.end('No targets in POST body detected - 2');
+      }
+
+      if (!req.body.options) {
+        return res.end('No options in POST body detected - 1');
+      } else {
+        var http_ports = (req.body.options.http_ports || []).filter(port => {
+          return port != ""
+        });
+
+        var https_ports = (req.body.options.https_ports || []).filter(port => {
+          return port != ""
+        });
+
+        var request_images = req.body.options.scripts || true;
+        var request_scripts = req.body.options.images || true;
       }
 
       try {
-        for (let host of req.body.hosts) {
-          const screen = await cluster.queue(`${host.protocol}://${host.host}:${host.port}`);
+        for (let target of req.body.targets) {
+          for (let http_port of http_ports) {
+            let screenshot_options = {
+              "url": `http://${target}:${http_port}`,
+              "images": request_images,
+              "scripts": request_scripts
+            }
+            console.log("taking http ss of ", screenshot_options);
+            cluster.queue(screenshot_options);
+          }
+
+          for (let https_port of https_ports) {
+            let screenshot_options = {
+              "url": `https://${target}:${https_port}`,
+              "images": request_images,
+              "scripts": request_scripts
+            }
+            console.log("taking https ss of ", screenshot_options);
+            cluster.queue(screenshot_options);
+          }
         }
-        // respond with image
         res.status(200).json({"success": true});
         res.end('{ "success": true }');
       } catch (err) {
-        // catch error
         res.end('Error: ' + err.message);
       }
   });

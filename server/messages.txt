@@ -1,0 +1,18 @@
+
+// POST /scan/screenshots
+{
+  "options": {
+    "http_ports": [80],
+    "https_ports": [443]
+    "images": true,
+    "scripts": false
+  },
+  "targets":[
+    "example.com",
+    "facebook.com"
+  ]
+}
+curl --header "Content-Type: application/json" \
+  --request POST \
+  --data '{"options": {"http_ports": [80], "https_ports": [443], "images": false, "scripts": false}, "targets": ["example.com", "facebook.com"]}' \
+  http://localhost:3000/scan/screenshots

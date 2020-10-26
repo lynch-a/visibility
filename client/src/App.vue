@@ -1,51 +1,21 @@
 <template>
   <v-app>
-    <div>
-      <v-app-bar
-        color="deep-purple accent-4"
-        dense
-        dark
-      >
-        <v-app-bar-nav-icon></v-app-bar-nav-icon>
-  
-        <v-toolbar-title>Visibility</v-toolbar-title>
-  
-        <v-spacer></v-spacer>
-  
-        <v-btn icon>
-          <v-icon>mdi-heart</v-icon>
-        </v-btn>
-
-        <v-btn icon>
-          <v-icon>mdi-heart</v-icon>
-        </v-btn>
-
-        <v-btn icon>
-          <v-icon>mdi-heart</v-icon>
-        </v-btn>
-
-      </v-app-bar>
-    </div>
-
+    <TopNav/>
     <v-main>
-      <Scan/>
-      <Overview/>
+      <router-view></router-view>
     </v-main>
   </v-app>
 </template>
 
 <script>
 //import HelloWorld from './components/HelloWorld';
-import Overview from './components/Overview';
-import Scan from './components/Scan';
+import TopNav from './components/TopNav';
 
 export default {
   name: 'App',
 
   components: {
-    //HelloWorld,
-    Overview,
-    Scan
+    TopNav,
   },
 
   sockets: {

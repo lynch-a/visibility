@@ -1,19 +1,16 @@
 <template>
-  <v-container>
+  <v-container fluid grid-list-xl>
     <v-row>
       <v-col v-for="host in HOSTS" v-bind:key="host.id">
-        <v-card max-width=374>
+        <v-card 
+          outlined
+          width="300px"
+        >
+          <v-card-text>{{ host | formatHost }}</v-card-text>
           <v-img
             contain
-            max-height="400"
-            max-width="400"
             :src=host.img
-            width=100%
           ></v-img>
-
-          <v-card-title>
-            {{ host | formatHost }}
-          </v-card-title>
 
           <v-card-text>
             {{ host | formatHost }}
@@ -48,7 +45,7 @@
   import {mapGetters} from 'vuex';
 
   export default {
-    name: 'Overview',
+    name: 'GalleryView',
 
     computed: {
       ...mapGetters(["HOSTS"])
@@ -66,3 +63,19 @@
   }
 
 </script>
+
+<style>
+/*
+  .container {
+    border: 1px solid green;
+  }
+
+  .row {
+    border: 1px solid red;
+  }
+
+  .col {
+    border: 1px solid blue;
+  }
+*/
+</style>

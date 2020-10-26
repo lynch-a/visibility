@@ -3,7 +3,6 @@ import Axios from 'axios';
 export default {
   getters: {
     HOSTS : (state) => {
-      console.log("host getter ", state.hosts);
       return state.hosts;
     }
   },
