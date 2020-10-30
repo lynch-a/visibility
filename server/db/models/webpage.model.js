@@ -1,11 +1,13 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-  sequelize.define('host', {
+  sequelize.define('webpage', {
 
-    host: DataTypes.STRING,
     protocol: DataTypes.STRING,
+    host: DataTypes.STRING,
     port: DataTypes.INTEGER,
+    response_code: DataTypes.INTEGER,
+    page_title: DataTypes.STRING,
     img: DataTypes.TEXT
   });
 };

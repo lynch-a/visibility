@@ -1,8 +1,8 @@
 function applyExtraSetup(sequelize) {
-	//const { host, orchestra } = sequelize.models;
+	const { webpage, header } = sequelize.models;
 
-	//orchestra.hasMany(instrument);
-	//instrument.belongsTo(orchestra);
+	webpage.hasMany(header);
+	header.belongsTo(webpage);
 }
 
 module.exports = { applyExtraSetup };

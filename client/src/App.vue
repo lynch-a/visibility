@@ -21,7 +21,7 @@ export default {
   sockets: {
     "screenshot-taken": function(data) {
       console.log("ss-taken: ", data);
-      this.$store.dispatch("ADD_HOST", data);
+      this.$store.dispatch("ADD_WEBPAGE", data);
     },
 
     connect: function () {

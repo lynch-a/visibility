@@ -158,7 +158,7 @@
         );
 
         this.snackbar = true
-        this.resetForm()
+        this.clearForm()
       },
       formatTargets(form) {
         const targets = [];

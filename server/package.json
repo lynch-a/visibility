@@ -18,7 +18,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "./node_modules/.bin/nodemon app.js",
     "debug": "./node_modules/.bin/nodemon --inspect app.js",
-    "setup-db": "node setup-db.js"
+    "setup-db": "node ./db/setup-db.js",
+    "seed": "node ./db/setup-db.js && node ./db/seed.js"
   },
   "keywords": [],
   "author": "",

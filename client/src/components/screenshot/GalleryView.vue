@@ -1,22 +1,22 @@
 <template>
   <v-container fluid grid-list-xl>
     <v-row>
-      <v-col v-for="host in HOSTS" v-bind:key="host.id">
+      <v-col v-for="webpage in WEBPAGES" v-bind:key="webpage.id">
         <v-card 
           outlined
           width="300px"
         >
-          <v-card-text>{{ host | formatHost }}</v-card-text>
+          <v-card-text>{{ webpage | fullUrl }}</v-card-text>
           <v-img
             contain
-            :src=host.img
+            :src=webpage.img
           ></v-img>
 
           <v-card-text>
-            {{ host | formatHost }}
+            {{ webpage | fullUrl }}
           </v-card-text>
 
-          <v-chip-group v-for="tag in host.tags" v-bind:key="tag.id">
+          <v-chip-group v-for="tag in webpage.tags" v-bind:key="tag.id">
             <v-chip class="ma-2" color="primary">{{ tag.text }}</v-chip>
           </v-chip-group>
 
@@ -48,16 +48,16 @@
     name: 'GalleryView',
 
     computed: {
-      ...mapGetters(["HOSTS"])
+      ...mapGetters(["WEBPAGES"])
     },
 
     mounted() {
-      this.$store.dispatch("SET_HOST");
+      this.$store.dispatch("SET_WEBPAGE");
     },
 
     filters: {
-      formatHost: function(host) {
-        return `${host.protocol}://${host.host}:${host.port}`;
+      fullUrl: function(webpage) {
+        return `${webpage.protocol}://${webpage.host}:${webpage.port}`;
       }
     }
   }

@@ -10,7 +10,8 @@ const sequelize = new Sequelize({
 });
 
 const modelDefiners = [
-	require('./models/host.model'),
+	require('./models/webpage.model'),
+	require('./models/header.model'),
 ];
 
 // We define all models according to their files.

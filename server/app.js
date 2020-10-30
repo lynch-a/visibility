@@ -61,7 +61,7 @@ async function init_cluster() {
       request.continue();
     });
 
-    await page.goto(data["url"], { waitUntil: 'domcontentloaded' });
+    var response = await page.goto(data["url"], { waitUntil: 'domcontentloaded' });
     //var file_name = url.replace("://", "-").replace(".", "-").replace(":", "-");
 
     var b64 = await page.screenshot(
@@ -75,15 +75,21 @@ async function init_cluster() {
 
     // fire event to WS
     var {host, protocol, port} = utils.getParsedUrl(data["url"]);
+    var pageTitle = await page.evaluate(() => document.title);
+    var responseCode = parseInt(response['_status']); // todo, might break?
+    var ip = response._remoteAddress['ip']; //unused
+    var headers = response._headers; // todo: parse
 
     const screenshot_data = {
-      host,
       protocol,
+      host,
       port,
+      response_code: responseCode, // todo
+      page_title: pageTitle, //todo
       "img": `data:image/png;base64,${b64}`
     };
 
-    await models.host.create(screenshot_data);
+    await models.webpage.create(screenshot_data);
 
     Socketio.sockets.emit('screenshot-taken', screenshot_data);
   });
@@ -158,9 +164,9 @@ async function init_express() {
       }
   });
 
-  app.get('/hosts', async function (req, res) {
-    const hosts = await models.host.findAll();
-    res.status(200).json(hosts);
+  app.get('/webpages', async function (req, res) {
+    const webpages = await models.webpage.findAll();
+    res.status(200).json(webpages);
   });
 }
 

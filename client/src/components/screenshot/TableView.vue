@@ -1,7 +1,7 @@
 <template>
   <v-data-table
     :headers="headers"
-    :items="HOSTS"
+    :items="WEBPAGES"
     :items-per-page="50"
     class="elevation-1"
   ></v-data-table>
@@ -22,11 +22,11 @@
           },
           {
             text: "Response",
-            value: "200"
+            value: "response_code"
           },
           {
             text: "Title",
-            value: "placeholder title"
+            value: "page_title"
           }
 
         ],
@@ -34,11 +34,11 @@
     },
 
     computed: {
-      ...mapGetters(["HOSTS"])
+      ...mapGetters(["WEBPAGES"])
     },
 
     mounted() {
-      this.$store.dispatch("SET_HOST");
+      this.$store.dispatch("SET_WEBPAGE");
     },
 
     filters: {

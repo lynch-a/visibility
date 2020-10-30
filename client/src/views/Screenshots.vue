@@ -8,6 +8,7 @@
       <v-tab>
         Scan
       </v-tab>
+
       <v-tab>
         Gallery View
       </v-tab>

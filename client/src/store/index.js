@@ -1,23 +1,23 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-import host_definitions from './hosts';
+import webpage_definitions from './webpages';
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    hosts: []
+    webpages: []
   },
 
   getters: {
-    ...host_definitions.getters
+    ...webpage_definitions.getters
   },
 
   mutations: {
-    ...host_definitions.mutations
+    ...webpage_definitions.mutations
   },
 
   actions: {
-    ...host_definitions.actions
+    ...webpage_definitions.actions
   }
 });

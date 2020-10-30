@@ -1,4 +1,4 @@
-const sequalize = require('./db');
+const sequalize = require('.');
 
 async function main() {
 	await sequalize.sync({force: true});
