@@ -166,7 +166,7 @@ for (let i = 0; i < lines.length; i++) {
         );
 
         console.log(`Screenshot taken: ${url}`);
-        c//onsole.log(b64);
+        //console.log(b64);
     });
 
     // In case of problems, log them
