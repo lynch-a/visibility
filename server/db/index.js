@@ -1,5 +1,5 @@
 const { Sequelize } = require('sequelize');
-const { applyExtraSetup } = require('./setup');
+const { applyExtraSetup } = require('./associations');
 const path = require('path');
 
 const sequelize = new Sequelize({

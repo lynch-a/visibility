@@ -5,6 +5,7 @@
         <v-card 
           outlined
           width="300px"
+          :to="{ name: 'ScreenshotDetail', params: { id: webpage.id }}"
         >
           <v-card-text>{{ webpage | fullUrl }}</v-card-text>
           <v-img

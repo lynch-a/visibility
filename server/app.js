@@ -84,12 +84,19 @@ async function init_cluster() {
       protocol,
       host,
       port,
-      response_code: responseCode, // todo
-      page_title: pageTitle, //todo
+      response_code: responseCode,
+      page_title: pageTitle,
       "img": `data:image/png;base64,${b64}`
     };
 
-    await models.webpage.create(screenshot_data);
+    var db_webpage = await models.webpage.create(screenshot_data);
+
+    for (let [header_key, header_value] of Object.entries(headers)) {
+        db_webpage.createHeader({
+          key: header_key,
+          value: header_value
+        });
+    }
 
     Socketio.sockets.emit('screenshot-taken', screenshot_data);
   });
@@ -167,6 +174,20 @@ async function init_express() {
   app.get('/webpages', async function (req, res) {
     const webpages = await models.webpage.findAll();
     res.status(200).json(webpages);
+  });
+
+  app.get('/webpages/:id', async function (req, res) {
+    const webpage = await models.webpage.findOne({where: {id: req.params.id}});
+    if (!webpage) {
+      // todo do somethin
+      res.status(404);
+      res.end('Not found');
+    }
+
+    const headers = await webpage.getHeaders();
+    
+
+    res.status(200).json({ page: webpage, headers: headers });
   });
 }
 
