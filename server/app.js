@@ -44,14 +44,14 @@ async function init_cluster() {
   await cluster.task(async ({ page, data: data }) => {
     await page.setRequestInterception(true);
       page.on('request', request => {
-        if (data["scripts"]) {
+        if (data["scripts"] == false) {
           if (request.resourceType() === 'script') {
             request.abort();
             return;
           }
       }
 
-      if (data["images"]) {
+      if (data["images"] == false) {
         if (request.resourceType() === 'image') {
           request.abort();
           return;
@@ -185,6 +185,9 @@ async function init_express() {
     }
 
     const headers = await webpage.getHeaders();
+
+    console.log(webpage);
+    console.log(headers);
     
 
     res.status(200).json({ page: webpage, headers: headers });

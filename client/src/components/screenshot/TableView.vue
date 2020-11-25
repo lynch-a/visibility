@@ -1,11 +1,31 @@
 <template>
-  <v-data-table
-    :headers="headers"
-    :items="WEBPAGES"
-    :items-per-page="50"
-    class="elevation-1"
-  ></v-data-table>
+  <div>
+    <v-text-field
+      v-model="search"
+      append-icon="mdi-magnify"
+      label="Search"
+      single-line
+      hide-details
+    ></v-text-field>
+
+    <v-data-table
+        :headers="headers"
+        :items="WEBPAGES"
+        :items-per-page="50"
+        class="elevation-1"
+        :search="search"
+      >
+
+      <template v-slot:item.host="{ item }">
+        <router-link :to="{ name: 'ScreenshotDetail', params: {id: item.id}}">
+          {{ item | fullUrl }}
+        </router-link>
+      </template>
+    
+    </v-data-table>
+  </div>
 </template>
+
 
 <script>
   import {mapGetters} from 'vuex';
@@ -15,6 +35,7 @@
 
     data() {
       return {
+        search: '',
         headers: [
           {
             text: 'URL',
@@ -28,7 +49,6 @@
             text: "Title",
             value: "page_title"
           }
-
         ],
       }
     },
@@ -42,9 +62,15 @@
     },
 
     filters: {
-      formatHost: function(host) {
-        return `${host.protocol}://${host.host}:${host.port}`;
+      fullUrl: function(webpage) {
+        return `${webpage.protocol}://${webpage.host}:${webpage.port}`;
       }
+    },
+    methods: {
+      //handleClick(value) {
+      // console.log(value);
+      //  this.$router.push({name: "ScreenshotDetail", params: {id: value.id}});
+      //},
     }
   }
 

@@ -5,7 +5,7 @@
 </template>
 
 <script>
-
+import Axios from 'axios';
 import Detail from '@/components/screenshot/Detail.vue'
 
 export default {

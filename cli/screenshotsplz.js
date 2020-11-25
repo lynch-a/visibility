@@ -156,7 +156,7 @@ for (let i = 0; i < lines.length; i++) {
 
         await page.goto(url, { waitUntil: 'domcontentloaded' });
 
-        var file_name = url.replace("://", "-").replace(".", "-").replace(":", "-");
+        var file_name = url.replace("://", "-").replace(":", "-");
 
         await page.screenshot(
             {

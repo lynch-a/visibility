@@ -43,7 +43,7 @@
         group: null,
         items: [
           { title: "Home", link: "/", icon: "mdi-home" },
-          { title: "Screenshots", link: "/screenshots", icon: "mdi-monitor-screenshot" }
+          { title: "Screenshots", link: "/screenshots/scan", icon: "mdi-monitor-screenshot" }
         ]
       }
     }
