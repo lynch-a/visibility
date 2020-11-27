@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-app-bar color="deep-purple accent-4" dense dark>
+    <v-app-bar dense>
       <v-toolbar-title>Visibility</v-toolbar-title>
 
       <v-spacer></v-spacer>

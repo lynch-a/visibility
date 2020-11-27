@@ -1,29 +1,39 @@
 const sequelize = require('.');
 
 async function seed() {
-	await sequelize.sync({ force: true });
+  await sequelize.sync({ force: true });
 
-	await sequelize.models.webpage.bulkCreate([
-		{ 
-			protocol: 'http',
-			host: 'example.com',
-			port: 80,
-			response_code: 200,
-			page_title: "Example seed page title",
-			img: "nonesrylol"
-		},
-	]);
+  var ex1 = await sequelize.models.webpage.create(
+    {
+      protocol: 'http',
+      host: 'example.com',
+      port: 80
+    }
+  );
 
-	var webpage = await sequelize.models.webpage.findOne();
+  var ex2 = await sequelize.models.webpage.create(
+    {
+      protocol: 'https',
+      host: 'marg.town',
+      port: 443
+    }
+  );
 
-	console.log("page: ", webpage);
+  ex1.createSnapshot({
+    image: "testimg",
+    headers: "{test: 'header1', test2: 'header2'}",
+    status_code: 200,
+    page_title: 'test title'
+  })
 
-	webpage.createHeader({
-		key: "testkey",
-		value: "testvalue"
-	})
-	
-	console.log('DB Seeded!');
+  ex2.createSnapshot({
+    image: "testimg2",
+    headers: "{test2: 'header3', test3: 'header4'}",
+    status_code: 500,
+    page_title: 'test title 2'
+  })
+  
+  console.log('DB Seeded!');
 }
 
 seed();

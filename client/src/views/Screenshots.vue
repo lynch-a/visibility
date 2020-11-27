@@ -4,8 +4,6 @@
       v-model="active"
       exact
       fixed-tabs
-      background-color="deep-purple accent-4"
-      dark
     >
 
       <v-tab v-for="tab of tabs" :key="tab.id" :to="{ name: tab.route_name }">

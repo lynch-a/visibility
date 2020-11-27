@@ -5,13 +5,14 @@ const path = require('path');
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: `${path.dirname(__filename)}/db.sqlite`,
+  retry: { max: 10 }
   //logQueryParameters: true,
   //benchmark: true
 });
 
 const modelDefiners = [
-	require('./models/webpage.model'),
-	require('./models/header.model'),
+	require('./models/screenshots/webpage.model'),
+	require('./models/screenshots/snapshot.model'),
 ];
 
 // We define all models according to their files.

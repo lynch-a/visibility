@@ -1,12 +1,14 @@
 <template>
   <div>
     {{ webpage | fullUrl }}
-
-    <v-img
-      contain
-      max-width="600"
-      :src=webpage.img
-    ></v-img>
+    <v-carousel v-model="model">
+      <v-carousel-item
+        v-for="(snapshot, i) in snapshots"
+        :key="snapshot.id"
+      >
+        <img :src="snapshots[i].image">
+      </v-carousel-item>
+    </v-carousel>
 
     <v-simple-table>
       <template v-slot:default>
@@ -21,9 +23,9 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="header in headers" :key="header.key">
-            <td class="text-right nowrap">{{header.key}}</td>
-            <td class="wrap">{{header.value}}</td>
+          <tr v-for="(header_value, header_key) in snapshots[active].headers" v-bind:key="header_key">
+            <td class="text-right nowrap">{{ header_key }}</td>
+            <td class="wrap">{{ header_value }}</td>
           </tr>
         </tbody>
       </template>
@@ -39,8 +41,10 @@
 
     data() {
       return {
+        active: 1,
+        model: 1,
         webpage: {},
-        headers: []
+        snapshots: {}
       }
     },
 
@@ -51,8 +55,9 @@
     mounted() {
       Axios.get('http://localhost:3000/webpages/' + this.$route.params.id).then(
         response => {
-          this.webpage = response.data.page;
-          this.headers = response.data.headers;
+          this.webpage = response.data.webpage;
+          this.snapshots = response.data.snapshots;
+          this.model = this.snapshots.length-1;
         }
       )
     },

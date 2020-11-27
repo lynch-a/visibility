@@ -73,32 +73,47 @@ async function init_cluster() {
 
     console.log(`Screenshot taken: ${data["url"]}`);
 
-    // fire event to WS
     var {host, protocol, port} = utils.getParsedUrl(data["url"]);
     var pageTitle = await page.evaluate(() => document.title);
-    var responseCode = parseInt(response['_status']); // todo, might break?
+    var responseCode = parseInt(response['_status']);
     var ip = response._remoteAddress['ip']; //unused
-    var headers = response._headers; // todo: parse
+    var headers = response._headers;
 
-    const screenshot_data = {
-      protocol,
-      host,
-      port,
-      response_code: responseCode,
-      page_title: pageTitle,
-      "img": `data:image/png;base64,${b64}`
+    const webpage_data = {
+      protocol: protocol,
+      host: host,
+      port: port
     };
 
-    var db_webpage = await models.webpage.create(screenshot_data);
+    const snapshot_data = {
+      page_title: pageTitle,
+      status_code: responseCode,
+      headers: headers,
+      image: `data:image/png;base64,${b64}`
+    };
 
-    for (let [header_key, header_value] of Object.entries(headers)) {
-        db_webpage.createHeader({
-          key: header_key,
-          value: header_value
-        });
+    try {
+      models.webpage.findOne(
+        {
+          where: webpage_data
+        }
+      ).then(async function (db_webpage) {
+        console.log(db_webpage);
+        var db_snapshot = null;
+        if (!db_webpage) {
+          db_webpage = await models.webpage.create(webpage_data);
+          db_snapshot = await db_webpage.createSnapshot(snapshot_data)
+        } else {
+          db_snapshot = await db_webpage.createSnapshot(snapshot_data);
+        }
+
+        //Socketio.sockets.emit('screenshot-taken', {webpage: db_webpage, snapshot: db_snapshot});
+      });
+
+
+    } catch (err) {
+      console.log(err);
     }
-
-    Socketio.sockets.emit('screenshot-taken', screenshot_data);
   });
 }
 
@@ -171,26 +186,69 @@ async function init_express() {
       }
   });
 
+
   app.get('/webpages', async function (req, res) {
-    const webpages = await models.webpage.findAll();
-    res.status(200).json(webpages);
+    var webpages = null;
+
+    if (req.query.page && req.query.perpage) {
+      // do pagination
+      var page = req.query.page-1;
+      var perpage = req.query.perpage;
+      console.log("page: ", page);
+      console.log("perpage: ", perpage);
+
+      webpages = await models.webpage.findAll({
+        attributes: ['id', 'host', 'port', 'protocol', [sequelize.fn('count', 'snapshot.id'), 'snapshot_count']],
+        group: ['webpage.id'],
+        include: [{
+          model: models.snapshot,
+          require: true
+        }],
+        offset: page * perpage,
+        limit: perpage
+      });
+
+    }  else {
+      // do no pagination
+      webpages = await models.webpage.findAll({
+        attributes: ['id', 'host', 'port', 'protocol', [sequelize.fn('count', 'snapshot.id'), 'snapshot_count']],
+        group: ['webpage.id'],
+        include: [{
+          model: models.snapshot,
+          require: true
+        }],
+      });
+    }
+
+    const total_webpages = await models.webpage.count();
+
+    res.status(200).json({total: total_webpages, webpages: webpages});
   });
 
   app.get('/webpages/:id', async function (req, res) {
-    const webpage = await models.webpage.findOne({where: {id: req.params.id}});
+    const webpage = await models.webpage.findOne(
+      {
+        where: {
+          id: req.params.id
+        },
+        include: [{
+          model: models.snapshot,
+          require: true
+        }]
+      }
+    );
+
     if (!webpage) {
       // todo do somethin
       res.status(404);
       res.end('Not found');
     }
 
-    const headers = await webpage.getHeaders();
+    // get the snapshot data
 
-    console.log(webpage);
-    console.log(headers);
-    
+    const snapshots = await webpage.getSnapshots();    
 
-    res.status(200).json({ page: webpage, headers: headers });
+    res.status(200).json({ webpage: webpage, snapshots: snapshots });
   });
 }
 

@@ -5,12 +5,12 @@
       append-icon="mdi-magnify"
       label="Search"
       single-line
-      hide-details
+      hide-detailsz
     ></v-text-field>
 
     <v-data-table
         :headers="headers"
-        :items="WEBPAGES"
+        :items="WEBPAGES.webpages"
         :items-per-page="50"
         class="elevation-1"
         :search="search"
@@ -20,6 +20,14 @@
         <router-link :to="{ name: 'ScreenshotDetail', params: {id: item.id}}">
           {{ item | fullUrl }}
         </router-link>
+      </template>
+
+      <template v-slot:item.response_code="{ item }">
+        {{ latestStatusCode(item) }}
+      </template>
+
+      <template v-slot:item.page_title="{ item }">
+        {{ latestPageTitle(item) }}
       </template>
     
     </v-data-table>
@@ -67,10 +75,12 @@
       }
     },
     methods: {
-      //handleClick(value) {
-      // console.log(value);
-      //  this.$router.push({name: "ScreenshotDetail", params: {id: value.id}});
-      //},
+      latestStatusCode: function(webpage) {
+        return webpage.snapshots[0].status_code;
+      },
+      latestPageTitle: function(webpage) {
+        return webpage.snapshots[0].page_title;
+      }
     }
   }
 
