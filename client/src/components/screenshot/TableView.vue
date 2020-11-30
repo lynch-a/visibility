@@ -77,10 +77,20 @@
     },
     methods: {
       latestStatusCode: function(webpage) {
-        return webpage.snapshots[0].status_code;
+        if (webpage.snapshots !== undefined) {
+          if (webpage.snapshots[0] !== undefined) {
+            return webpage.snapshots[0].status_code;
+          }
+        }
+        return "N/A"
       },
       latestPageTitle: function(webpage) {
-        return webpage.snapshots[0].page_title;
+        if (webpage.snapshots !== undefined) {
+          if (webpage.snapshots[0] !== undefined) {
+            return webpage.snapshots[0].page_title;
+          }
+        }
+        return "N/A"
       }
     }
   }
