@@ -1,35 +1,38 @@
 <template>
   <div>
-    {{ webpage | fullUrl }}
-    <v-carousel v-model="model">
-      <v-carousel-item
-        v-for="(snapshot, i) in snapshots"
-        :key="snapshot.id"
-      >
-        <img :src="snapshots[i].image">
-      </v-carousel-item>
-    </v-carousel>
+    <v-card>
+      <v-card-title>{{ webpage | fullUrl }}</v-card-title>
+      <v-card-subtitle>Screenshot taken: {{ snapshots[model].createdAt }}</v-card-subtitle>
+      <v-carousel v-model="model" height="auto">
+        <v-carousel-item
+          v-for="(snapshot, i) in snapshots"
+          :key="snapshot.id"
+          :src="snapshots[i].image"
+        >
+        </v-carousel-item>
+      </v-carousel>
 
-    <v-simple-table>
-      <template v-slot:default>
-        <thead>
-          <tr>
-            <th class="text-right">
-              Header
-            </th>
-            <th class="text-left">
-              Value
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(header_value, header_key) in snapshots[active].headers" v-bind:key="header_key">
-            <td class="text-right nowrap">{{ header_key }}</td>
-            <td class="wrap">{{ header_value }}</td>
-          </tr>
-        </tbody>
-      </template>
-    </v-simple-table>
+      <v-simple-table>
+        <template v-slot:default>
+          <thead>
+            <tr>
+              <th class="text-right">
+                Header
+              </th>
+              <th class="text-left">
+                Value
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(header_value, header_key) in snapshots[model].headers" v-bind:key="header_key">
+              <td class="text-right nowrap">{{ header_key }}</td>
+              <td class="wrap">{{ header_value }}</td>
+            </tr>
+          </tbody>
+        </template>
+      </v-simple-table>
+    </v-card>
   </div>
 </template>
 
@@ -41,7 +44,6 @@
 
     data() {
       return {
-        active: 1,
         model: 1,
         webpage: {},
         snapshots: {}

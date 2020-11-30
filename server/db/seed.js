@@ -2,7 +2,7 @@ const sequelize = require('.');
 
 async function seed() {
   await sequelize.sync({ force: true });
-
+/*
   var ex1 = await sequelize.models.webpage.create(
     {
       protocol: 'http',
@@ -32,7 +32,7 @@ async function seed() {
     status_code: 500,
     page_title: 'test title 2'
   })
-  
+  */
   console.log('DB Seeded!');
 }
 

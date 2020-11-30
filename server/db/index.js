@@ -2,22 +2,23 @@ const { Sequelize } = require('sequelize');
 const { applyExtraSetup } = require('./associations');
 const path = require('path');
 
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: `${path.dirname(__filename)}/db.sqlite`,
-  retry: { max: 10 }
+const sequelize = new Sequelize('visibility', 'visibility', 'SOMETHINGSECURE', {
+  host: 'localhost',
+  dialect: 'postgres',
+  //storage: `${path.dirname(__filename)}/db.sqlite`,
+  //retry: { max: 10 }
   //logQueryParameters: true,
   //benchmark: true
 });
 
 const modelDefiners = [
-	require('./models/screenshots/webpage.model'),
-	require('./models/screenshots/snapshot.model'),
+  require('./models/screenshots/webpage.model'),
+  require('./models/screenshots/snapshot.model'),
 ];
 
 // We define all models according to their files.
 for (const modelDefiner of modelDefiners) {
-	modelDefiner(sequelize);
+  modelDefiner(sequelize);
 }
 
 // We execute any extra setup after the models are defined, such as adding associations.

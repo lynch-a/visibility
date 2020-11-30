@@ -23,6 +23,14 @@ export default {
       console.log("ss-taken: ", data);
       this.$store.dispatch("ADD_WEBPAGE", data);
     },
+    "job-done": function(data) {
+      console.log("removing job: ", data);
+      this.$store.dispatch("REMOVE_JOB", data);
+    },
+    "job-failed": function(data) {
+      console.log("failing job: ", data);
+      this.$store.dispatch("FAIL_JOB", data);
+    },
 
     connect: function () {
       console.log('socket to notification channel connected from app.vue')

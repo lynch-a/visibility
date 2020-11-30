@@ -1,17 +1,31 @@
 <template>
   <v-container fluid grid-list-xl>
-    <v-row>
-      <v-pagination
-        v-model="page"
-        :length="totalPages"
-        @input="handlePageChange"
-      ></v-pagination>
+    <v-row dense align="center">
+      <v-col cols="2">
+        <v-select
+          v-model="pageSize"
+          :items="pageSizes"
+          label="Items"
+          @change="handlePageChange"
+        ></v-select>
+      </v-col>
+
+
+      <v-col>
+        <v-pagination
+          v-model="page"
+          :length="totalPages"
+          @input="handlePageChange"
+        ></v-pagination>
+      </v-col>
     </v-row>
+
+
     <v-row>
       <v-col v-for="webpage in WEBPAGES.webpages" v-bind:key="webpage.id">
         <v-card 
           outlined
-          width="300px"
+          width="350px"
           :to="{ name: 'ScreenshotDetail', params: { id: webpage.id }}"
         >
           <v-card-text>{{ webpage | fullUrl }}</v-card-text>
@@ -42,6 +56,14 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <v-row>
+      <v-pagination
+        v-model="page"
+        :length="totalPages"
+        @input="handlePageChange"
+      ></v-pagination>
+    </v-row>
   </v-container>
 </template>
 
@@ -56,7 +78,8 @@
         page: 1,
         totalPages: 0,
         pageSize: 20,
-        search: ""
+        pageSizes: [10, 20, 50, 100],
+        search: "",
       }
     },
 
@@ -64,7 +87,7 @@
       ...mapGetters(["WEBPAGES"])
     },
     mounted() {
-      this.$store.dispatch("SET_WEBPAGE", {page: this.page}).then(() => {
+      this.$store.dispatch("SET_WEBPAGE", {page: this.page, perpage: this.pageSize}).then(() => {
         console.log("webpages count: ", this.WEBPAGES.total);
         this.totalPages = parseInt(this.WEBPAGES.total / this.pageSize) + 1;
       });
@@ -78,6 +101,7 @@
     methods: {
       handlePageChange(page) {
         this.$store.dispatch("SET_WEBPAGE", {page: this.page, perpage: this.pageSize});
+        this.totalPages = parseInt(this.WEBPAGES.total / this.pageSize) + 1;
       },
     }
   }

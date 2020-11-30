@@ -13,6 +13,10 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 let cluster = null;
+
+let job_id_inc = 0;
+let screenshot_jobs = {};
+
 app.use(express.json({limit: '10mb'}));
 
 
@@ -42,6 +46,7 @@ async function init_cluster() {
   });
 
   await cluster.task(async ({ page, data: data }) => {
+    /*
     await page.setRequestInterception(true);
       page.on('request', request => {
         if (data["scripts"] == false) {
@@ -60,9 +65,18 @@ async function init_cluster() {
 
       request.continue();
     });
-
-    var response = await page.goto(data["url"], { waitUntil: 'domcontentloaded' });
+    */
+    console.log("visiting website");
+    try {
+      var response = await page.goto(data["url"], { waitUntil: 'domcontentloaded' });
+    } catch(err) {
+      console.log(`couldn't visit website: ${data["url"]}`, err);
+      Socketio.sockets.emit('job-done', {job_id: data["job_id"]});
+      delete screenshot_jobs[data["job_id"]];
+      return;
+    }
     //var file_name = url.replace("://", "-").replace(".", "-").replace(":", "-");
+    console.log("visited website");
 
     var b64 = await page.screenshot(
       {
@@ -71,7 +85,7 @@ async function init_cluster() {
       }
     );
 
-    console.log(`Screenshot taken: ${data["url"]}`);
+    console.log("got ss");
 
     var {host, protocol, port} = utils.getParsedUrl(data["url"]);
     var pageTitle = await page.evaluate(() => document.title);
@@ -92,13 +106,13 @@ async function init_cluster() {
       image: `data:image/png;base64,${b64}`
     };
 
+    console.log("trying to add to db");
     try {
       models.webpage.findOne(
         {
           where: webpage_data
         }
       ).then(async function (db_webpage) {
-        console.log(db_webpage);
         var db_snapshot = null;
         if (!db_webpage) {
           db_webpage = await models.webpage.create(webpage_data);
@@ -106,14 +120,15 @@ async function init_cluster() {
         } else {
           db_snapshot = await db_webpage.createSnapshot(snapshot_data);
         }
-
-        //Socketio.sockets.emit('screenshot-taken', {webpage: db_webpage, snapshot: db_snapshot});
+        console.log(`Screenshot taken: ${data["url"]}`);
+        delete screenshot_jobs[data["job_id"]];
+        Socketio.sockets.emit('job-done', {job_id: data["job_id"]});
       });
-
-
     } catch (err) {
+      delete screenshot_jobs[data["job_id"]];
       console.log(err);
     }
+
   });
 }
 
@@ -161,25 +176,47 @@ async function init_express() {
         for (let target of req.body.targets) {
           for (let http_port of http_ports) {
             let screenshot_options = {
+              "job_id": job_id_inc,
               "url": `http://${target}:${http_port}`,
               "images": request_images,
               "scripts": request_scripts
             }
             console.log("taking http ss of ", screenshot_options);
+
             cluster.queue(screenshot_options);
+
+            screenshot_jobs[job_id_inc] = {
+              id: job_id_inc,
+              url: screenshot_options["url"],
+              timestamp: Date.now()
+            };
+
+            job_id_inc++;
           }
 
           for (let https_port of https_ports) {
             let screenshot_options = {
+              "job_id": job_id_inc,
               "url": `https://${target}:${https_port}`,
               "images": request_images,
               "scripts": request_scripts
             }
             console.log("taking https ss of ", screenshot_options);
             cluster.queue(screenshot_options);
+            try {
+              screenshot_jobs[job_id_inc] = {
+                id: job_id_inc,
+                url: screenshot_options["url"],
+                timestamp: Date.now()
+              };
+              
+              job_id_inc++;
+            } catch (err) {
+              console.log(err)
+            }
           }
         }
-        res.status(200).json({"success": true});
+        res.status(200).json({"success": true, screenshot_jobs});
         res.end('{ "success": true }');
       } catch (err) {
         res.end('Error: ' + err.message);
@@ -212,11 +249,12 @@ async function init_express() {
       // do no pagination
       webpages = await models.webpage.findAll({
         attributes: ['id', 'host', 'port', 'protocol', [sequelize.fn('count', 'snapshot.id'), 'snapshot_count']],
-        group: ['webpage.id'],
         include: [{
           model: models.snapshot,
+          attributes: ['headers', 'status_code', 'page_title'],
           require: true
         }],
+        group: ['webpage.id', 'snapshots.id']
       });
     }
 
@@ -251,6 +289,10 @@ async function init_express() {
     res.status(200).json({ webpage: webpage, snapshots: snapshots });
   });
 }
+
+app.get('/jobs', async function(req, res) {
+  res.status(200).json(screenshot_jobs);
+});
 
 async function init_db() {
   console.log(`Checking database connection...`);

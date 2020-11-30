@@ -9,6 +9,7 @@ export default {
 
   mutations: {
     SET_WEBPAGE: (state, payload) => {
+      console.log("is it setting");
       state.webpages = payload;
     },
 
@@ -39,20 +40,21 @@ export default {
       var perpage = 20;
 
       if (payload !== undefined) {
-        if (Object.prototype.hasOwnProperty.call(payload, "page")) {
+        if (Object.prototype.hasOwnProperty.call(payload, "page") &&
+          Object.prototype.hasOwnProperty.call(payload, "perpage")) {
           page = payload.page;
-        }
-      }
-      if (payload !== undefined) {
-        if (Object.prototype.hasOwnProperty.call(payload, "perpage")) {
           perpage = payload.perpage;
+
+          let { data } = await Axios.get('http://localhost:3000/webpages?page='+page+'&perpage='+perpage);
+          ctx.commit("SET_WEBPAGE", data);
+        } else {
+          let { data } = await Axios.get('http://localhost:3000/webpages');
+          ctx.commit("SET_WEBPAGE", data);
         }
+      } else {
+        let { data } = await Axios.get('http://localhost:3000/webpages');
+        ctx.commit("SET_WEBPAGE", data);
       }
-
-      console.log("page?: ", page);
-
-      let { data } = await Axios.get('http://localhost:3000/webpages?page='+page+'&perpage='+perpage);
-      ctx.commit("SET_WEBPAGE", data);
     },
     ADD_WEBPAGE: (ctx, payload) => {
       ctx.commit("ADD_WEBPAGE", payload);

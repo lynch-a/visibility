@@ -9,7 +9,7 @@
           right
           color="success"
         >
-          <span>Starting scan</span>
+          <span>Added to scan queue</span>
           <v-icon dark>
             mdi-checkbox-marked-circle
           </v-icon>
@@ -90,22 +90,28 @@
         </v-form>
       </v-card>
     </v-row>
+
+    <v-row>
+      Screenshots remaining: {{ Object.keys(JOBS).length }}
+    </v-row>
+
   </v-container>
 </template>
 
 <script>
   import Axios from 'axios';
+  import {mapGetters} from 'vuex';
 
   export default {
     name: 'Scan',
 
     data () {
-      const defaultForm = Object.freeze({
+      const defaultForm = {
         target_list: '',
         http_ports: '',
         https_ports: '',
         optionValues: ["images", "scripts"]
-      })
+      }
 
       const scanOptions = [
         {
@@ -117,7 +123,7 @@
       ];
 
       return {
-        form: Object.assign({}, defaultForm),
+        form: defaultForm,
         rules: {
 
         },
@@ -131,6 +137,8 @@
     },
 
     computed: {
+      ...mapGetters(["JOBS"]),
+
       formIsValid () {
         return (
           (this.form.http_ports || this.form.https_ports) &&
@@ -139,23 +147,29 @@
       },
     },
 
+    mounted() {
+      this.$store.dispatch("SET_JOBS");
+    },
+
     methods: {
       clearForm () {
-        this.form = Object.assign({}, this.defaultForm)
-        this.$refs.form.reset()
+        this.form = this.defaultForm;
+        //this.$refs.form.reset()
       },
 
       async submit () {
         const targets = this.formatTargets(this.form);
         const options = this.formatOptions(this.form);
 
-        // TODO: get configured server url
         const res = await Axios.post('http://localhost:3000/scan/screenshots',
           {
             "options": options,
             "targets": targets
           }
         );
+
+        this.$store.dispatch("ADD_JOBS", res["data"]);
+
 
         this.snackbar = true
         this.clearForm()

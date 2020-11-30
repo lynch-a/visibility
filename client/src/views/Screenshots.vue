@@ -10,8 +10,10 @@
         {{ tab.name }}
       </v-tab>
     </v-tabs>
-
-    <router-view></router-view>
+    
+    <keep-alive>
+      <router-view :key="$route.fullPath"></router-view>
+    </keep-alive>
   </div>
 </template>
 
