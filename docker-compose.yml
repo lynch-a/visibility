@@ -1,0 +1,41 @@
+version: '3'
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: visibility
+  ui:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    volumes:
+      - /client/node_modules
+      - ./client:/client
+    ports:
+      - '8080:8080'
+    restart: on-failure
+    container_name: ui
+    logging:
+      driver: "none"
+  ss-api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    ports:
+      - '3001:3001'
+      - '3000:3000'
+    restart: on-failure
+    container_name: ss-api
+    volumes:
+      - /server/node_modules # Inside the container, don't try to override this folder, just leave as is
+      - ./server:/server # Look at the server directory and copy everything into the app folder in the container
+    environment:
+      - PGUSER=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGPASSWORD=postgres
+      - PGPORT=5432

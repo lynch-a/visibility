@@ -2,9 +2,10 @@ const { Sequelize } = require('sequelize');
 const { applyExtraSetup } = require('./associations');
 const path = require('path');
 
-const sequelize = new Sequelize('visibility', 'visibility', 'SOMETHINGSECURE', {
-  host: 'localhost',
+const sequelize = new Sequelize('visibility', 'postgres', 'postgres', {
+  host: 'db',
   dialect: 'postgres',
+  logging: false
   //storage: `${path.dirname(__filename)}/db.sqlite`,
   //retry: { max: 10 }
   //logQueryParameters: true,

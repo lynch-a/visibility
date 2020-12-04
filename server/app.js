@@ -38,97 +38,79 @@ async function init_cluster() {
         '--no-first-run',
         '--disable-client-side-phishing-detection',
         '--disable-background-networking',
-        '--window-size=1366,768'
+        '--window-size=1366,768',
+        '--disable-dev-shm-usage',
+        '--process-per-site'
       ]
     },
-    monitor: false,
+    //monitor: true,
     timeout: 10000
   });
 
   await cluster.task(async ({ page, data: data }) => {
-    /*
-    await page.setRequestInterception(true);
-      page.on('request', request => {
-        if (data["scripts"] == false) {
-          if (request.resourceType() === 'script') {
-            request.abort();
-            return;
-          }
-      }
-
-      if (data["images"] == false) {
-        if (request.resourceType() === 'image') {
-          request.abort();
-          return;
-        }
-      }
-
-      request.continue();
-    });
-    */
-    console.log("visiting website");
     try {
+      //console.log("visiting website");
       var response = await page.goto(data["url"], { waitUntil: 'domcontentloaded' });
-    } catch(err) {
-      console.log(`couldn't visit website: ${data["url"]}`, err);
+      //console.log("version: ", await page.browser().version());
+
+      //var file_name = url.replace("://", "-").replace(".", "-").replace(":", "-");
+      //console.log("visited website");
+
+      var b64 = await page.screenshot(
+        {
+          encoding: "base64",
+          //fullPage: true
+          //path: `screenshots/${file_name}.png`,
+        }
+      );
+
+      //console.log("got ss");
+      var {host, protocol, port} = utils.getParsedUrl(data["url"]);
+      var pageTitle = await page.evaluate(() => document.title);
+      var responseCode = parseInt(response['_status']);
+      var ip = response._remoteAddress['ip']; //unused
+      var headers = response._headers;
+
+      const webpage_data = {
+        protocol: protocol,
+        host: host,
+        port: port
+      };
+
+      const snapshot_data = {
+        page_title: pageTitle,
+        status_code: responseCode,
+        headers: headers,
+        image: `data:image/png;base64,${b64}`
+      };
+
+      //console.log("trying to add to db");
+      try {
+        models.webpage.findOne(
+          {
+            where: webpage_data
+          }
+        ).then(async function (db_webpage) {
+          var db_snapshot = null;
+          if (!db_webpage) {
+            db_webpage = await models.webpage.create(webpage_data);
+            db_snapshot = await db_webpage.createSnapshot(snapshot_data)
+          } else {
+            db_snapshot = await db_webpage.createSnapshot(snapshot_data);
+          }
+          //console.log(`Screenshot taken: ${data["url"]}`);
+        });
+      } catch (err) {
+        console.log("error in database save:", err);
+      }
+    } catch (err) {
+      console.log("BIG PROBLEM: ", err);
+      console.log("failed on: ", data["url"]);
+    } finally {
+      // no matter what remove the job from the queue
       Socketio.sockets.emit('job-done', {job_id: data["job_id"]});
       delete screenshot_jobs[data["job_id"]];
-      return;
     }
-    //var file_name = url.replace("://", "-").replace(".", "-").replace(":", "-");
-    console.log("visited website");
-
-    var b64 = await page.screenshot(
-      {
-        encoding: "base64"
-        //path: `screenshots/${file_name}.png`,
-      }
-    );
-
-    console.log("got ss");
-
-    var {host, protocol, port} = utils.getParsedUrl(data["url"]);
-    var pageTitle = await page.evaluate(() => document.title);
-    var responseCode = parseInt(response['_status']);
-    var ip = response._remoteAddress['ip']; //unused
-    var headers = response._headers;
-
-    const webpage_data = {
-      protocol: protocol,
-      host: host,
-      port: port
-    };
-
-    const snapshot_data = {
-      page_title: pageTitle,
-      status_code: responseCode,
-      headers: headers,
-      image: `data:image/png;base64,${b64}`
-    };
-
-    console.log("trying to add to db");
-    try {
-      models.webpage.findOne(
-        {
-          where: webpage_data
-        }
-      ).then(async function (db_webpage) {
-        var db_snapshot = null;
-        if (!db_webpage) {
-          db_webpage = await models.webpage.create(webpage_data);
-          db_snapshot = await db_webpage.createSnapshot(snapshot_data)
-        } else {
-          db_snapshot = await db_webpage.createSnapshot(snapshot_data);
-        }
-        console.log(`Screenshot taken: ${data["url"]}`);
-        delete screenshot_jobs[data["job_id"]];
-        Socketio.sockets.emit('job-done', {job_id: data["job_id"]});
-      });
-    } catch (err) {
-      delete screenshot_jobs[data["job_id"]];
-      console.log(err);
-    }
-
   });
 }
 
@@ -181,7 +163,7 @@ async function init_express() {
               "images": request_images,
               "scripts": request_scripts
             }
-            console.log("taking http ss of ", screenshot_options);
+            //console.log("taking http ss of ", screenshot_options);
 
             cluster.queue(screenshot_options);
 
@@ -201,7 +183,7 @@ async function init_express() {
               "images": request_images,
               "scripts": request_scripts
             }
-            console.log("taking https ss of ", screenshot_options);
+           // console.log("taking https ss of ", screenshot_options);
             cluster.queue(screenshot_options);
             try {
               screenshot_jobs[job_id_inc] = {
