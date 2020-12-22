@@ -2,8 +2,23 @@ const { Sequelize } = require('sequelize');
 const { applyExtraSetup } = require('./associations');
 const path = require('path');
 
+/*
+docker config
+
 const sequelize = new Sequelize('visibility', 'postgres', 'postgres', {
   host: 'db',
+  dialect: 'postgres',
+  logging: false
+  //storage: `${path.dirname(__filename)}/db.sqlite`,
+  //retry: { max: 10 }
+  //logQueryParameters: true,
+  //benchmark: true
+});
+*/
+
+// non-docker config
+const sequelize = new Sequelize('visibility', 'visibility', 'SOMETHINGSECURE', {
+  host: 'localhost',
   dialect: 'postgres',
   logging: false
   //storage: `${path.dirname(__filename)}/db.sqlite`,

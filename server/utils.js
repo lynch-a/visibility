@@ -1,21 +1,34 @@
 module.exports.getParsedUrl = function(url) {
   var parsed_url = new URL(url);
-  var parsed_port = parsed_url.port;
 
-  if (parsed_port == '') {
+  var hostname = parsed_url.hostname;
+  var port = parsed_url.port;
+
+  if (port == '') {
     switch(parsed_url.protocol) {
       case 'http:':
-        parsed_port = 80;
+        port = 80;
         break;
       case 'https:':
-        parsed_port = 443;
+        port = 443;
+        break;
+      case 'file:': //todo
+        port = 9999;
         break;
     }
   }
 
+  if (port == "" || port == undefined) {
+    port = 9999;
+  }
+
+  if (hostname == "" || hostname == undefined) {
+    hostname = "ERROR";
+  }
+
   return {
-    "host": parsed_url.hostname,
+    "host": hostname,
     "protocol": parsed_url.protocol.replace(":", ""),
-    "port": parsed_port
+    "port": port
   };
 }

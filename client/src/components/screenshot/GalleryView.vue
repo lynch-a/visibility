@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid grid-list-xl>
+  <v-container fluid grid-list-md>
     <v-row dense align="center">
       <v-col cols="2">
         <v-select
@@ -20,42 +20,44 @@
       </v-col>
     </v-row>
 
+    <v-container style="width:90%">
+      <v-layout row wrap>
+        <v-flex v-for="webpage in WEBPAGES.webpages" v-bind:key="webpage.id">
+          <v-card 
+            outlined
+            :to="{ name: 'ScreenshotDetail', params: { id: webpage.id }}"
+            width="100%"
+          >
+            <v-card-text>{{ webpage | fullUrl }}</v-card-text>
+            <v-img
+              contain
+              max-width="350px"
+              :src=webpage.snapshots[0].image
+            ></v-img>
 
-    <v-row>
-      <v-col v-for="webpage in WEBPAGES.webpages" v-bind:key="webpage.id">
-        <v-card 
-          outlined
-          width="350px"
-          :to="{ name: 'ScreenshotDetail', params: { id: webpage.id }}"
-        >
-          <v-card-text>{{ webpage | fullUrl }}</v-card-text>
-          <v-img
-            contain
-            :src=webpage.snapshots[0].image
-          ></v-img>
+            <v-chip-group v-for="tag in webpage.tags" v-bind:key="tag.id">
+              <v-chip class="ma-2" color="primary">{{ tag.text }}</v-chip>
+            </v-chip-group>
 
-          <v-chip-group v-for="tag in webpage.tags" v-bind:key="tag.id">
-            <v-chip class="ma-2" color="primary">{{ tag.text }}</v-chip>
-          </v-chip-group>
+            <v-card-actions>
+              <v-spacer></v-spacer>
 
-          <v-card-actions>
-            <v-spacer></v-spacer>
+              <v-btn icon>
+                <v-icon>mdi-heart</v-icon>
+              </v-btn>
 
-            <v-btn icon>
-              <v-icon>mdi-heart</v-icon>
-            </v-btn>
+              <v-btn icon>
+                <v-icon>mdi-bookmark</v-icon>
+              </v-btn>
 
-            <v-btn icon>
-              <v-icon>mdi-bookmark</v-icon>
-            </v-btn>
-
-            <v-btn icon>
-              <v-icon>mdi-share-variant</v-icon>
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-col>
-    </v-row>
+              <v-btn icon>
+                <v-icon>mdi-share-variant</v-icon>
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-flex>
+      </v-layout>
+    </v-container>
 
     <v-row>
       <v-pagination

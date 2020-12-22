@@ -12,6 +12,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+aws-config.json
+ssh-pubkey.pub
+
 # ignore screenshots
 *.png
 

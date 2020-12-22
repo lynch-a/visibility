@@ -9,22 +9,151 @@ const utils = require('./utils');
 const sequelize = require('./db');
 const { models } = sequelize;
 const cors = require('cors');
+const os = require('os')
 
 const app = express();
 app.use(cors());
-let cluster = null;
+
+/*
+  worker looks like:
+  
+  1: {
+    id: worker_index,
+    name: name,
+    url: browserURL,
+    total_tabs: os.cpus().length * 2, // 2 tabs per core seems ok
+    puppeteer_cluster: puppeteer_cluster,
+    queued: 0
+  }
+
+  2: {
+    ...
+  }
+*/
+
+let workers = [];
+let worker_meta = {};
+
+let worker_index = 0;
 
 let job_id_inc = 0;
-let screenshot_jobs = {};
 
 app.use(express.json({limit: '10mb'}));
 
 
+async function do_ss({ page, data: data}) {
+  console.time(`total-ss-time-${data["worker_id"]}-${data["job_id"]}`);
+  try {
+    //console.log("visiting website");
+    //console.time(`ss-time-${data["job_id"]}`);
+    var response = await page.goto(data["url"], { waitUntil: 'domcontentloaded' });
+    //console.log("version: ", await page.browser().version());
+
+    //var file_name = url.replace("://", "-").replace(".", "-").replace(":", "-");
+    //console.log("visited website");
+
+    var b64 = await page.screenshot(
+      {
+        encoding: "base64",
+        type: "jpeg",
+        //fullPage: true
+        //path: `screenshots/${file_name}.png`,
+      }
+    );
+    //console.timeEnd(`ss-time-${data["job_id"]}`);
+
+    //console.log("got ss");
+    var {host, protocol, port} = utils.getParsedUrl(data["url"]);
+    var pageTitle = await page.evaluate(() => document.title);
+    //var responseCode = parseInt(response['_status']);
+    var responseCode = 200;
+    //var ip = response._remoteAddress['ip']; //unused
+    var headers = response._headers;
+    //console.log(headers);
+
+    const webpage_data = {
+      protocol: protocol,
+      host: host,
+      port: data["port"]
+    };
+
+    const snapshot_data = {
+      page_title: pageTitle,
+      status_code: responseCode,
+      headers: headers,
+      image: `data:image/jpeg;base64,${b64}`
+    };
+
+    //console.log("trying to add to db");
+    //console.time(`db-time-${data["job_id"]}`);
+
+    try {
+      models.webpage.findOne(
+        {
+          where: webpage_data
+        }
+      ).then(async function (db_webpage) {
+        var db_snapshot = null;
+        if (!db_webpage) {
+          db_webpage = await models.webpage.create(webpage_data);
+          db_snapshot = await db_webpage.createSnapshot(snapshot_data)
+        } else {
+          db_snapshot = await db_webpage.createSnapshot(snapshot_data);
+        }
+        //console.log(`Screenshot taken: ${data["url"]}`);
+      });
+    } catch (err) {
+      console.log("error in database save:", err);
+    }
+    //console.timeEnd(`db-time-${data["job_id"]}`);
+
+  } catch (err) {
+    console.log("BIG PROBLEM: ", err);
+    console.log("failed on: ", data["url"]);
+  } finally {
+    worker_meta[data["worker_id"]].queued--;
+
+    Socketio.sockets.emit('worker-update', {
+      worker_id: data["worker_id"],
+      worker: worker_meta[data["worker_id"]]
+    });
+
+  }
+  console.timeEnd(`total-ss-time-${data["worker_id"]}-${data["job_id"]}`);
+}
+
+// throws exception on fail
+async function init_remote_cluster(name, browserURL, tabs, timeout) {
+  let puppeteer_cluster = await Cluster.launch({
+    concurrency: Cluster.CONCURRENCY_REMOTE_PAGE,
+    maxConcurrency: tabs,
+    puppeteerOptions: {
+      headless: true,
+      ignoreHTTPSErrors: true,
+      browserURL: browserURL,
+    },
+    //monitor: true,
+    timeout: timeout
+  })
+
+  workers[worker_index] = puppeteer_cluster;
+
+  worker_meta[worker_index] = {
+    id: worker_index,
+    name: name,
+    url: browserURL,
+    total_tabs: tabs,
+    queued: 0
+  }
+
+  worker_index++;
+}
+
 
 async function init_cluster() {
-  cluster = await Cluster.launch({
+  let puppeteer_cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_PAGE,
-    maxConcurrency: 20,
+    maxConcurrency: os.cpus().length * 2,
     puppeteerOptions: {
       headless: true,
       ignoreHTTPSErrors: true,
@@ -40,78 +169,23 @@ async function init_cluster() {
         '--disable-background-networking',
         '--window-size=1366,768',
         '--disable-dev-shm-usage',
-        '--process-per-site'
       ]
     },
     //monitor: true,
     timeout: 10000
   });
 
-  await cluster.task(async ({ page, data: data }) => {
-    try {
-      //console.log("visiting website");
-      var response = await page.goto(data["url"], { waitUntil: 'domcontentloaded' });
-      //console.log("version: ", await page.browser().version());
+  workers[worker_index] = puppeteer_cluster;
 
-      //var file_name = url.replace("://", "-").replace(".", "-").replace(":", "-");
-      //console.log("visited website");
+  worker_meta[worker_index] = {
+    id: worker_index,
+    name: "local",
+    url: "<local>",
+    total_tabs: os.cpus().length * 2, // 2 tabs per core seems ok
+    queued: 0
+  }
 
-      var b64 = await page.screenshot(
-        {
-          encoding: "base64",
-          //fullPage: true
-          //path: `screenshots/${file_name}.png`,
-        }
-      );
-
-      //console.log("got ss");
-      var {host, protocol, port} = utils.getParsedUrl(data["url"]);
-      var pageTitle = await page.evaluate(() => document.title);
-      var responseCode = parseInt(response['_status']);
-      var ip = response._remoteAddress['ip']; //unused
-      var headers = response._headers;
-
-      const webpage_data = {
-        protocol: protocol,
-        host: host,
-        port: port
-      };
-
-      const snapshot_data = {
-        page_title: pageTitle,
-        status_code: responseCode,
-        headers: headers,
-        image: `data:image/png;base64,${b64}`
-      };
-
-      //console.log("trying to add to db");
-      try {
-        models.webpage.findOne(
-          {
-            where: webpage_data
-          }
-        ).then(async function (db_webpage) {
-          var db_snapshot = null;
-          if (!db_webpage) {
-            db_webpage = await models.webpage.create(webpage_data);
-            db_snapshot = await db_webpage.createSnapshot(snapshot_data)
-          } else {
-            db_snapshot = await db_webpage.createSnapshot(snapshot_data);
-          }
-          //console.log(`Screenshot taken: ${data["url"]}`);
-        });
-      } catch (err) {
-        console.log("error in database save:", err);
-      }
-    } catch (err) {
-      console.log("BIG PROBLEM: ", err);
-      console.log("failed on: ", data["url"]);
-    } finally {
-      // no matter what remove the job from the queue
-      Socketio.sockets.emit('job-done', {job_id: data["job_id"]});
-      delete screenshot_jobs[data["job_id"]];
-    }
-  });
+  worker_index++;
 }
 
 async function init_ws() {
@@ -154,24 +228,22 @@ async function init_express() {
         var request_scripts = req.body.options.images || true;
       }
 
-      try {
+      //try {
+
+        var queue = [];
+
         for (let target of req.body.targets) {
           for (let http_port of http_ports) {
             let screenshot_options = {
               "job_id": job_id_inc,
-              "url": `http://${target}:${http_port}`,
+              //"url": `http://${target}:${http_port}`,
+              "url": `http://${target}:${https_port}`,
+              "port": parseInt(http_port),
               "images": request_images,
               "scripts": request_scripts
             }
-            //console.log("taking http ss of ", screenshot_options);
 
-            cluster.queue(screenshot_options);
-
-            screenshot_jobs[job_id_inc] = {
-              id: job_id_inc,
-              url: screenshot_options["url"],
-              timestamp: Date.now()
-            };
+            queue.push(screenshot_options);
 
             job_id_inc++;
           }
@@ -180,29 +252,43 @@ async function init_express() {
             let screenshot_options = {
               "job_id": job_id_inc,
               "url": `https://${target}:${https_port}`,
+              "port": parseInt(https_port),
               "images": request_images,
               "scripts": request_scripts
             }
-           // console.log("taking https ss of ", screenshot_options);
-            cluster.queue(screenshot_options);
-            try {
-              screenshot_jobs[job_id_inc] = {
-                id: job_id_inc,
-                url: screenshot_options["url"],
-                timestamp: Date.now()
-              };
-              
-              job_id_inc++;
-            } catch (err) {
-              console.log(err)
+
+            queue.push(screenshot_options);
+            job_id_inc++;
+          }
+        }
+
+        // distribute the queued jobs based on how many tabs each worker has available
+        if (workers.length > 0) {
+          queue_loop: while (queue.length > 0) {
+            for(let [index, worker] of workers.entries()) {
+              for(var i = 0; i < worker_meta[index]["total_tabs"]; i++) {
+                var temp_job = queue.shift();
+
+                // add worker id to job
+                temp_job.worker_id = index;
+
+                worker.queue(temp_job, do_ss);
+
+                worker_meta[index].queued++
+
+                if (queue.length == 0) {
+                  break queue_loop;
+                }
+              }
             }
           }
         }
-        res.status(200).json({"success": true, screenshot_jobs});
-        res.end('{ "success": true }');
-      } catch (err) {
-        res.end('Error: ' + err.message);
-      }
+
+        res.status(200).json({"success": true, workers: worker_meta});
+        //res.end('{ "success": true }');
+      //} catch (err) {
+      //  res.end('Error: ' + err.message);
+      //}
   });
 
 
@@ -272,8 +358,22 @@ async function init_express() {
   });
 }
 
-app.get('/jobs', async function(req, res) {
-  res.status(200).json(screenshot_jobs);
+app.post('/workers/add', async function(req, res) {
+  var name = req.body.worker_name;
+  var url = req.body.worker_url;
+  var tabs = parseInt(req.body.worker_tabs);
+
+  try {
+    await init_remote_cluster(name, url, tabs, 10000);
+    res.status(200).json({success: true, workers: worker_meta});
+  }  catch (err) {
+    console.log("error adding worker: ", err);
+    res.status(200).json({success: false, error: err.toString()});
+  }
+});
+
+app.get('/workers', async function(req, res) {
+  res.status(200).json({success: true, workers: worker_meta});
 });
 
 async function init_db() {
@@ -287,6 +387,9 @@ async function init_db() {
     process.exit(1);
   }
 }
+
+//init_remote_cluster("hm9k-ec2", "http://18.207.172.247:8082/", 4, 10000);
+//init_remote_cluster("mediapc", "http://192.168.0.88:4123/", 12, 10000)
 
 init_cluster();
 init_ws();

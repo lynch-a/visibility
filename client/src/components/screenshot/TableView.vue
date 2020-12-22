@@ -66,7 +66,6 @@
     },
 
     mounted() {
-      console.log("doing  thing");
       this.$store.dispatch("SET_WEBPAGE");
     },
 
