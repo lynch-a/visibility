@@ -17,7 +17,7 @@ const sequelize = new Sequelize('visibility', 'postgres', 'postgres', {
 */
 
 // non-docker config
-const sequelize = new Sequelize('visibility', 'visibility', 'SOMETHINGSECURE', {
+const sequelize = new Sequelize('visibility', 'visibility', 'SOMETHINGSECURE', { //todo: autogen db password or put in dockerfile
   host: 'localhost',
   dialect: 'postgres',
   logging: false
@@ -30,6 +30,7 @@ const sequelize = new Sequelize('visibility', 'visibility', 'SOMETHINGSECURE', {
 const modelDefiners = [
   require('./models/screenshots/webpage.model'),
   require('./models/screenshots/snapshot.model'),
+  require('./models/screenshots/worker.model'),
 ];
 
 // We define all models according to their files.

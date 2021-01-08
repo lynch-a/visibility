@@ -2,15 +2,9 @@
 const AWS = require('aws-sdk');
 const fs = require('fs')
 
-// set creds
 AWS.config.loadFromPath('./aws-config.json');
-
-// set the region
 AWS.config.update({region:'us-east-1'});
-
-// create an ec2 object
 const ec2 = new AWS.EC2({apiVersion: '2016-11-15'});
-
 const ssh_pubkey = fs.readFileSync('ssh-pubkey.pub', 'utf8');
 
 let install_and_start_chromium = `#!/bin/bash
@@ -19,12 +13,6 @@ sudo apt-get install -y chromium-browser
 printf "${ssh_pubkey}" >> /home/ubuntu/.ssh/authorized_keys
 chromium-browser --headless --no-sandbox --remote-debugging-port=9222 --remote-debugging-address=0.0.0.0 --user-data-dir=/tmp`;
 
-
-//console.log("userdata: ", install_and_start_chromium);
-
-// ami-00ddb0e5626798373
-// type: t2.micro
-// count: 1
 async function create_instances(ami, type, count) {
   let sg_id = await create_or_return_sg();
 
@@ -57,7 +45,7 @@ async function create_instances(ami, type, count) {
     for(let instance of data["Instances"]) {
       let ip = null;
 
-      while (true) { // wait for ec2 public ip; prob set a timeout or wait on this lol
+      while (true) { // wait for ec2 public ip; prob set a timeout on this lol
         try {
           //console.log("spinning and waiting for ec2 public ip on : ", instance["InstanceId"]);
           let describe_instance_params = {
@@ -142,7 +130,7 @@ async function create_sg() {
   return SecurityGroupId;
 }
 
-// returns the GroupId of created / existing sg
+// returns the GroupId of created sg if it didn't exist or existing sg
 async function create_or_return_sg() {
   try {
     var sg_params = {
@@ -150,8 +138,8 @@ async function create_or_return_sg() {
     };
 
     var data = await ec2.describeSecurityGroups(sg_params).promise();
-
     return data.SecurityGroups[0]["GroupId"];
+
   } catch (err) {
     if (err.name == "InvalidGroup.NotFound") {
       // security group didn't exist, make it first
@@ -162,8 +150,13 @@ async function create_or_return_sg() {
   }
 }
 
-create_instances("ami-00ddb0e5626798373", "t2.micro", 1).then( data => {
-  console.log("instances result: ", data);
-})
+//create_instances("ami-00ddb0e5626798373", "t2.micro", 1).then( data => {
+//  console.log("instances result: ", data);
+//})
+
+
+module.exports = {
+  create_instances
+}
 
 // ssh -L 20000:127.0.0.1:9222 ubuntu@18.234.34.66 -i ~/.ssh/dev-vm

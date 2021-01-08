@@ -14,7 +14,8 @@
     "puppeteer-cluster": "^0.22.0",
     "sequelize": "^6.3.5",
     "socket.io": "^2.3.0",
-    "sqlite3": "^5.0.0"
+    "sqlite3": "^5.0.0",
+    "tunnel-ssh": "^4.1.4"
   },
   "devDependencies": {},
   "scripts": {
