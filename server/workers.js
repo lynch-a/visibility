@@ -1,4 +1,4 @@
-const os = require('os')
+const os = require('os');
 const { Cluster } = require('puppeteer-cluster');
 const aws = require('./aws');
 const tunnel = require('tunnel-ssh');
