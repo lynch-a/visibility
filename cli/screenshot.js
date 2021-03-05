@@ -9,8 +9,8 @@ work: {
   },
   targets: ['test.com', 'example.com']
 }
-
 */
+
 async function queue_screenshots(work) {
   var http_ports = work.options.http_ports || [];
   var https_ports = work.options.https_ports || [];
@@ -93,6 +93,9 @@ async function do_ss({ page, data: data}) {
     console.log("[" + data["worker_name"] + "] screenshot taken: ", data["url"]);
   } catch (err) {
     console.log("couldn't take screenshot of: ", data["url"]);
+    console.log("-----------");
+    console.log(err);
+    console.log("-----------");
   } finally {
     workers.metadata[data["worker_id"]].queued--;
   }

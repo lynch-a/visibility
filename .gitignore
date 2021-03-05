@@ -29,3 +29,8 @@ ssh-pubkey.pub
 *.njsproj
 *.sln
 *.sw?
+
+*.pub
+authorized_keys
+*.tar.gz
+aws-config.json

@@ -30,17 +30,14 @@ var use_local_worker = config.workers.use_local || true;
 var use_remote_workers = config.workers.use_remote_workers || false;
 var remote_worker_ssh_key = config.workers.remote_worker_ssh_key || "~/.ssh/id_rsa"
 var local_worker_tabs = config.workers.local_worker_tabs || os.cpus().length * 2;
-
+var worker_local_port_start = config.workers.worker_local_port_start;
 // parse targets and queue work
 (async () => {
   if (use_local_worker) {
     await workers.init_local_cluster(local_worker_tabs);
   }
 
-// workers[] = test-ssh|ssh|root@localhost:40022|4|10000
 
-
-  var worker_port = 40000;
   if (use_remote_workers) {
     if (config.workers.workers) {
       for(worker of config.workers.workers) {
@@ -67,9 +64,11 @@ var local_worker_tabs = config.workers.local_worker_tabs || os.cpus().length * 2
             port = split3[1];
           }
 
-          var tunnel = await spawn('ssh', ['-qtt', '-L', `${worker_port}:localhost:9222`, `${username}@${host}`, '-p', `${port}`, '-i', `${remote_worker_ssh_key}`]);
-          await workers.init_remote_cluster(name, "http://localhost:"+worker_port, tabs, timeout);
-          worker_port++;
+          console.log(`ssh -qtt -oStrictHostKeyChecking=no -L ${worker_local_port_start}:localhost:9222 ${username}@${host} -p ${port} -i ${remote_worker_ssh_key}`);
+          var tunnel = await spawn('ssh', ['-qtt', '-oStrictHostKeyChecking=no', '-L', `${worker_local_port_start}:localhost:9222`, `${username}@${host}`, '-p', `${port}`, '-i', `${remote_worker_ssh_key}`]);
+          await workers.init_remote_cluster(name, "http://localhost:"+worker_local_port_start, tabs, timeout);
+          worker_local_port_start++;
+
         } else if (method == "http") {
           await workers.init_remote_cluster(name, url, tabs, timeout);
         } else {

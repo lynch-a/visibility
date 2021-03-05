@@ -31,6 +31,8 @@ async function init_remote_cluster(name, browserURL, tabs, timeout) {
     console.log("PROBLEM!!!");
     console.log("Couldn't access remote worker: ", browserURL);
     console.log("Please check configuration and ensure you can visit " + browserURL + " from the computer running this script");
+    console.log("-----");
+    console.log("verbose error:", err);
     process.exit(1);
   }
 }
@@ -74,6 +76,8 @@ async function init_local_cluster(tabs) {
     console.log("PROBLEM!!!");
     console.log("Couldn't create local worker");
     console.log("Is puppeteer installed correctly?");
+    console.log("-----");
+    console.log("verbose error:", err);
     process.exit(1);
   }
 }
